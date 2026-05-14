@@ -45,15 +45,6 @@ def is_polonium_atom(smiles: str):
     
     return True, f"Valid polonium isotope with mass number {mass_num}"
 
-__metadata__ = {
-    'chemical_class': {
-        'id': 'CHEBI:33369',
-        'name': 'polonium atom',
-        'definition': 'A radioactive metallic element discovered in 1898 by Marie Sklodowska Curie and named after her home country, Poland (Latin Polonia).',
-        'parents': []
-    }
-}
-
 
 __metadata__ = {   'chemical_class': {   'id': 'CHEBI:33313',
                           'name': 'polonium atom',
