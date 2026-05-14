@@ -27,7 +27,7 @@ from c3p.learn import (
 logger = logging.getLogger(__name__)
 
 
-def _extract_metadata_from_code(code: str) -> Optional[Dict[str, Any]]:
+def _extract_metadata_from_code(code: str) -> Dict[str, Any]:
     """Parse __metadata__ dict from a program file without executing code."""
     try:
         module = ast.parse(code)
@@ -48,31 +48,20 @@ def _extract_metadata_from_code(code: str) -> Optional[Dict[str, Any]]:
     raise ValueError(f"__metadata__ not found in program: {code}")
 
 
-def _find_dataset_class(
-    dataset: Dataset, program_path: Path, metadata: Optional[Dict[str, Any]]
-):
+def _find_dataset_class(dataset: Dataset, program_path: Path, metadata: Dict[str, Any]):
     """Find dataset class for a program via metadata CHEBI id, then by safe name."""
-    if metadata:
-        chebi_id = metadata.get("chemical_class", {}).get("id")
-        if chebi_id:
-            try:
-                return dataset.get_chemical_class_by_id(chebi_id)
-            except ValueError:
-                raise ValueError(
-                    f"Class id {chebi_id} from {program_path.name} not found in dataset"
-                )
-        else:
+    chebi_id = metadata.get("chemical_class", {}).get("id")
+    if chebi_id:
+        try:
+            return dataset.get_chemical_class_by_id(chebi_id)
+        except ValueError:
             raise ValueError(
-                f"No CHEBI id in metadata for {program_path.name}, falling back to filename match"
+                f"Class id {chebi_id} from {program_path.name} not found in dataset"
             )
-
-    stem = program_path.stem
-    for cls in dataset.classes:
-        if safe_name(cls.name) == stem:
-            return cls
-    raise ValueError(
-        f"No matching class found in dataset for program {program_path.name}"
-    )
+    else:
+        raise ValueError(
+            f"No CHEBI id in metadata for {program_path.name}, falling back to filename match"
+        )
 
 
 def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any]:
