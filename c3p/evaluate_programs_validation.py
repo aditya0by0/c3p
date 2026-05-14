@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from tqdm import tqdm
 
 from c3p.datamodel import Dataset
 from c3p.learn import (
@@ -58,10 +59,12 @@ def _find_dataset_class(
                 return dataset.get_chemical_class_by_id(chebi_id)
             except ValueError:
                 raise ValueError(
-                    "Class id %s from %s not found in dataset",
-                    chebi_id,
-                    program_path.name,
+                    f"Class id {chebi_id} from {program_path.name} not found in dataset"
                 )
+        else:
+            raise ValueError(
+                f"No CHEBI id in metadata for {program_path.name}, falling back to filename match"
+            )
 
     stem = program_path.stem
     for cls in dataset.classes:
@@ -108,7 +111,13 @@ def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any
         }
 
     try:
-        result = evaluate_program(code, cls.lite_copy(), pos, neg)
+        result = evaluate_program(
+            code,
+            cls.lite_copy(),
+            pos,
+            neg,
+            threshold=-0.01,  # some dummy value, not used
+        )
     except Exception as e:
         raise ValueError(
             f"Error occurred while evaluating program {program_path.name}: {e}"
@@ -158,18 +167,47 @@ def evaluate_programs(
     )
     rows: List[Dict[str, Any]] = []
 
-    for program_path in programs:
-        logger.info("Evaluating %s", program_path.name)
-        rows.append(_evaluate_one_program(program_path, dataset))
+    # Load existing results if any, to skip already-evaluated programs
+    done_programs = set()
+    if output_json and output_json.exists():
+        try:
+            rows = json.loads(output_json.read_text())
+            done_programs = {r.get("program") for r in rows if r.get("program")}
+            logger.info(
+                "Loaded %d existing results, will skip %d programs",
+                len(rows),
+                len(done_programs),
+            )
+        except Exception as e:
+            logger.warning("Failed to load existing output_json %s: %s", output_json, e)
+            rows = []
+            done_programs = set()
 
-    df = pd.DataFrame(rows)
+    # Ensure output directory exists before writing iteratively
     output_csv.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_csv, index=False)
-
     if output_json:
         output_json.parent.mkdir(parents=True, exist_ok=True)
-        output_json.write_text(json.dumps(rows, indent=2))
 
+    for program_path in tqdm(programs, desc="Programs"):
+        if program_path.name in done_programs:
+            logger.info("Skipping %s (already evaluated)", program_path.name)
+            continue
+
+        logger.info("Evaluating %s", program_path.name)
+        row = _evaluate_one_program(program_path, dataset)
+        rows.append(row)
+        done_programs.add(row.get("program"))
+
+        # Persist results after each program so progress is saved.
+        try:
+            df_partial = pd.DataFrame(rows)
+            df_partial.to_csv(output_csv, index=False)
+            if output_json:
+                output_json.write_text(json.dumps(rows, indent=2))
+        except Exception as e:
+            logger.error("Failed to write incremental results: %s", e)
+
+    df = pd.DataFrame(rows)
     return df
 
 
