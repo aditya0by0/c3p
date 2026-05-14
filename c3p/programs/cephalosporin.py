@@ -78,14 +78,6 @@ def is_cephalosporin(smiles: str):
 
     return False, "Cephalosporin core structure not found"
 
-__metadata__ = {
-    'chemical_class': {
-        'id': 'CHEBI:23066',
-        'name': 'cephalosporin',
-        'definition': 'A class of beta-lactam antibiotics differing from the penicillins in having a 6-membered, rather than a 5-membered, side ring. Although cephalosporins are among the most commonly used antibiotics in the treatment of routine infections, and their use is increasing over time, they can cause a range of hypersensitivity reactions, from mild, delayed-onset cutaneous reactions to life-threatening anaphylaxis in patients with immunoglobulin E (IgE)-mediated allergy.',
-    },
-}
-
 
 __metadata__ = {   'chemical_class': {   'id': 'CHEBI:23066',
                           'name': 'cephalosporin',

@@ -21,7 +21,6 @@ from c3p.datamodel import Dataset
 from c3p.learn import (
     evaluate_program,
     get_positive_and_negative_validate_instances,
-    safe_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,6 +32,20 @@ def _extract_metadata_from_code(code: str) -> Dict[str, Any]:
         module = ast.parse(code)
     except SyntaxError as e:
         raise ValueError(f"Failed to parse program for metadata extraction: {e}")
+
+    if (
+        len(
+            [
+                target
+                for node in module.body
+                if isinstance(node, ast.Assign)
+                for target in node.targets
+                if isinstance(target, ast.Name) and target.id == "__metadata__"
+            ]
+        )
+        > 1
+    ):
+        raise ValueError("Multiple assignments to __metadata__ found in program")
 
     for node in module.body:
         if isinstance(node, ast.Assign):
@@ -66,38 +79,28 @@ def _find_dataset_class(dataset: Dataset, program_path: Path, metadata: Dict[str
 
 def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any]:
     code = program_path.read_text()
-    metadata = _extract_metadata_from_code(code)
+    try:
+        metadata = _extract_metadata_from_code(code)
+    except ValueError as e:
+        raise ValueError(
+            {
+                "program": program_path.name,
+                "status": "error",
+                "error": str(e),
+            }
+        )
     cls = _find_dataset_class(dataset, program_path, metadata)
 
     if cls is None:
         raise ValueError(
             f"No matching class found in dataset for program {program_path.name}"
         )
-        return {
-            "program": program_path.name,
-            "chebi_id": metadata.get("chemical_class", {}).get("id")
-            if metadata
-            else None,
-            "class_name": metadata.get("chemical_class", {}).get("name")
-            if metadata
-            else None,
-            "status": "skipped_no_matching_class",
-        }
 
     pos, neg = get_positive_and_negative_validate_instances(cls, dataset)
     if not pos and not neg:
         raise ValueError(
             f"No validation examples for class {cls.id} ({cls.name}) in program {program_path.name}"
         )
-
-        return {
-            "program": program_path.name,
-            "chebi_id": cls.id,
-            "class_name": cls.name,
-            "num_validate_pos": 0,
-            "num_validate_neg": 0,
-            "status": "skipped_no_validation_examples",
-        }
 
     try:
         result = evaluate_program(
@@ -111,15 +114,6 @@ def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any
         raise ValueError(
             f"Error occurred while evaluating program {program_path.name}: {e}"
         )
-        return {
-            "program": program_path.name,
-            "chebi_id": cls.id,
-            "class_name": cls.name,
-            "num_validate_pos": len(pos),
-            "num_validate_neg": len(neg),
-            "status": "error",
-            "error": str(e),
-        }
 
     return {
         "program": program_path.name,
@@ -194,7 +188,7 @@ def evaluate_programs(
             if output_json:
                 output_json.write_text(json.dumps(rows, indent=2))
         except Exception as e:
-            logger.error("Failed to write incremental results: %s", e)
+            raise ValueError("Failed to write incremental results: %s", e)
 
     df = pd.DataFrame(rows)
     return df
