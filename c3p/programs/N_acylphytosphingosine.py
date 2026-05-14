@@ -42,19 +42,6 @@ def is_N_acylphytosphingosine(smiles: str):
     
     return True, "Contains phytosphingosine backbone with acyl group attached to nitrogen and galactose/glucose moiety"
 
-__metadata__ = {
-    'chemical_class': {
-        'id': 'CHEBI:35801',
-        'name': 'N-acylphytosphingosine',
-        'definition': 'A ceramide that is phytosphingosine having a fatty acyl group attached to the nitrogen.',
-        'parents': ['CHEBI:35798']
-    },
-    'config': {
-        # ... (existing config data)
-    },
-    # ... (existing metadata)
-}
-
 
 __metadata__ = {   'chemical_class': {   'id': 'CHEBI:31998',
                           'name': 'N-acylphytosphingosine',
