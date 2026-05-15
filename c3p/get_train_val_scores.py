@@ -1,8 +1,11 @@
-"""Evaluate all program files against validation examples in a dataset.
+"""Evaluate classifier program files against dataset validation examples.
 
-This script loads each program from a directory (default: c3p/programs), maps it to a
-CHEBI class (prefer metadata id, fallback to safe-name/file-stem match), evaluates on
-validation examples, and writes per-class metrics.
+Scans program files in a directory (default: c3p/programs), extracts __metadata__
+safely without executing code, maps each program to a CHEBI class (prefer metadata id,
+fallback to filename/safe-name match), evaluates on validation examples, and writes
+per-class metrics incrementally to CSV/JSON (defaults: results/validation_program_eval.*).
+Skips programs already present in an existing output JSON and persists progress after
+each program so partial results are saved. Returns a pandas DataFrame of results.
 """
 
 from __future__ import annotations
