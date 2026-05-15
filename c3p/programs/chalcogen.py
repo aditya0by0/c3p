@@ -71,14 +71,6 @@ def is_chalcogen(smiles: str):
         return True, f"Chalcogen: {element_name}"
 
 
-__metadata__ = {
-    'chemical_class': {
-        'name': 'chalcogen',
-        'definition': 'Any p-block element belonging to the group 16 family of the periodic table.',
-    }
-}
-
-
 __metadata__ = {   'chemical_class': {   'id': 'CHEBI:33303',
                           'name': 'chalcogen',
                           'definition': 'Any p-block element belonging to the '

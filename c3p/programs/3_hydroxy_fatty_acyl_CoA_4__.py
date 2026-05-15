@@ -52,15 +52,6 @@ def is_3_hydroxy_fatty_acyl_CoA_4__(smiles: str):
 
     return True, "Molecule is a 3-hydroxy fatty acyl-CoA(4-)"
 
-__metadata__ = {
-    'chemical_class': {
-        'name': '3-hydroxy fatty acyl-CoA(4-)',
-        'definition': 'An acyl-CoA(4-) oxoanion arising from deprotonation of the phosphate and diphosphate OH groups of any 3-hydroxy fatty acyl-CoA; major species at pH 7.3.',
-    },
-    'success': True,
-    'error': '',
-}
-
 
 __metadata__ = {   'chemical_class': {   'id': 'CHEBI:65102',
                           'name': '3-hydroxy fatty acyl-CoA(4-)',
