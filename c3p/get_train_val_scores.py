@@ -114,25 +114,51 @@ def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any
         raise ValueError(
             f"Error occurred while evaluating program {program_path.name}: {e}"
         )
+    # Build validation metrics nested under 'val'
+    val_metrics = {
+        "num_pos": len(pos),
+        "num_neg": len(neg),
+        "status": "ok" if result.success else "runtime_error",
+        "success": result.success,
+        "precision": getattr(result, "precision", None),
+        "recall": getattr(result, "recall", None),
+        "f1": getattr(result, "f1", None),
+        "accuracy": getattr(result, "accuracy", None),
+        "negative_predictive_value": getattr(result, "negative_predictive_value", None),
+        "num_true_positives": getattr(result, "num_true_positives", None),
+        "num_false_positives": getattr(result, "num_false_positives", None),
+        "num_true_negatives": getattr(result, "num_true_negatives", None),
+        "num_false_negatives": getattr(result, "num_false_negatives", None),
+        "error": getattr(result, "error", ""),
+    }
 
+    # Extract train metrics from program metadata if present.
+    train_keys = [
+        "status",
+        "success",
+        "precision",
+        "recall",
+        "f1",
+        "accuracy",
+        "negative_predictive_value",
+        "num_true_positives",
+        "num_false_positives",
+        "num_true_negatives",
+        "num_false_negatives",
+        "error",
+    ]
+    train_metrics: Dict[str, Any] = {}
+    for k in train_keys:
+        if k in metadata:
+            train_metrics[k] = metadata.get(k)
+
+    # Return only nested 'val' and 'train' as requested
     return {
         "program": program_path.name,
         "chebi_id": cls.id,
         "class_name": cls.name,
-        "num_validate_pos": len(pos),
-        "num_validate_neg": len(neg),
-        "status": "ok" if result.success else "runtime_error",
-        "success": result.success,
-        "precision": result.precision,
-        "recall": result.recall,
-        "f1": result.f1,
-        "accuracy": result.accuracy,
-        "negative_predictive_value": result.negative_predictive_value,
-        "num_true_positives": result.num_true_positives,
-        "num_false_positives": result.num_false_positives,
-        "num_true_negatives": result.num_true_negatives,
-        "num_false_negatives": result.num_false_negatives,
-        "error": result.error,
+        "val": val_metrics,
+        "train": train_metrics,
     }
 
 
