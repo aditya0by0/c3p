@@ -133,6 +133,8 @@ def _evaluate_one_program(program_path: Path, dataset: Dataset) -> Dict[str, Any
         "num_true_negatives": getattr(result, "num_true_negatives", None),
         "num_false_negatives": getattr(result, "num_false_negatives", None),
         "error": getattr(result, "error", ""),
+        "fp_smiles": getattr(result, "false_positives", None),
+        "fn_smiles": getattr(result, "false_negatives", None),
     }
 
     # Extract train metrics from program metadata if present.
@@ -221,6 +223,15 @@ def evaluate_programs(
 
     df = pd.DataFrame(rows)
     return df
+
+
+def evaluate_single_program(dataset_path: Path, program_path: Path) -> None:
+    """Evaluate a single program file against the dataset and return metrics."""
+    with dataset_path.open("r") as f:
+        dataset = Dataset.model_validate_json(f.read())
+    result = _evaluate_one_program(program_path, dataset)
+    with open(f"{program_path.name}_eval.json", "w") as f:
+        json.dump(result, f, indent=2)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:

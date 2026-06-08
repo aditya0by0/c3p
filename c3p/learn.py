@@ -267,6 +267,7 @@ def evaluate_program(code_str: str, chemical_class: ChemicalClass, positive_inst
         # message=err,
         true_positives=true_positives,
         false_positives=false_positives,
+        false_negatives=false_negatives,
         sample_false_negatives=false_negatives[:10],
         sample_true_negatives=true_negatives[:10],
         num_true_negatives=len(true_negatives),
